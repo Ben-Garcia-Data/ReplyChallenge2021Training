@@ -1,0 +1,155 @@
+
+def file_reader(file_location):
+    import ast
+    print('Begining to read file')
+    file1 = open(file_location, 'r')
+    Lines = file1.readlines()
+    file1.close() # Close here or at end of function?
+    #print('Done reading. Now to eval')
+
+    output = []
+
+    count = 0
+
+    # Strips the newline character
+    for line in Lines:
+        try:
+            s = line.strip().split()
+            #print(s)
+
+            for entry in range(len(s)):
+                #print(s[entry])
+                s[entry] = int(s[entry])
+
+            output.append(s)
+
+            #print("A")
+        except:
+            #print("B")
+            output.append(line)
+
+    #print('Done evaling file')
+    #print(output)
+    T = output.pop(0)
+
+    output_list = []
+    this_case = []
+
+    for entry in output:
+        if len(entry) == 1:
+            continue
+        if len(entry) == 3 and len(this_case) != 0:
+            #print('This entry is a new case')
+            output_list.append(this_case)
+            this_case = []
+            this_case.append(entry)
+        else:
+            this_case.append(entry)
+
+    output_list.append(this_case)
+
+    #print(output_list)
+
+    return T, output_list
+
+def analyser(N, K, M, CP):
+
+    import pandas as pd
+
+    pd.set_option('mode.chained_assignment', None)
+
+    # We have N servers.
+    # We can use up to K servers.
+    # We have M tasks.
+
+    # Within CP we have details of every server if format: P, S.
+    # P = startup time
+    # S = Task completion time
+
+    # We have to find the min time to execute all tasks.
+
+    Plist = []
+    Slist = []
+    Rlist = []
+    Elist = []
+    PotRunTimelist = []
+    tasksdone = 0
+    newserverallowed = True
+
+    for server in CP:
+        Plist.append(server[0])
+        Slist.append(server[1])
+        Rlist.append(0)
+        Elist.append(False)
+        if M < N:
+            PotRunTimelist.append(server[1] + server[0])
+            #print('Low number of tasks, starting with startup times.')
+        else:
+            PotRunTimelist.append(server[1])
+
+
+    df1 = pd.DataFrame({"P":Plist, "S" : Slist, "RunTime" : Rlist, "PotRunTime" : PotRunTimelist ,"Enabled" : Elist, "TasksAssigned" : Rlist})
+
+    #print(df1)
+    #print("-------")
+    def RunTask(inputdf):
+
+        inputdf = inputdf.sort_values('PotRunTime')
+        shortdf = inputdf.head(1)
+
+        shortdf["RunTime"] = shortdf["PotRunTime"]
+        shortdf["PotRunTime"] = shortdf["RunTime"] + shortdf["S"]
+        shortdf["Enabled"] = True
+        shortdf["TasksAssigned"] += 1
+        # This edits the values on only the first row of the data. Pretty neat huh?
+
+        #print(shortdf)
+        #print("-----")
+        #print(inputdf)
+
+        return inputdf
+
+    removed_servers = False
+
+    for task in range(M):
+        #print('Task: {}'.format(task))
+        #print('Tasksdone: {}'.format(tasksdone))
+
+        enabled_servers = df1[df1.Enabled == True].sum()["Enabled"]  # of servers currently on.
+
+        if removed_servers == False and enabled_servers == K:
+            #print("Removing excess servers")
+            #print(df1)
+            #print("-------------------------")
+            df1 = df1[df1.Enabled != False]
+            #print(df1)
+            removed_servers = True
+
+        df1 = RunTask(df1)
+        #print("-------")
+        #print(df1)
+
+    #print("DONE")
+    if M >= N:
+        df1['RunTime'] = df1['RunTime'] + df1['P']
+
+    #print(df1)
+    runtimes = df1['RunTime'].to_list()
+
+
+    #print(runtimes)
+    return max(runtimes)
+
+
+
+T, data = file_reader(r"C:\Users\PC\Desktop\Code\replychallenge\Task3\realinput.txt")
+casenum = 0
+for case in data:
+    casenum += 1
+    #print("Starting case {}".format(casenum))
+    N = case[0][0]
+    K = case[0][1]
+    M = case[0][2]
+    CP = case[1:]
+    processing_time = analyser(N, K, M, CP)
+    print("Case #{}: {}".format(casenum,processing_time))
