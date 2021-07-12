@@ -1,0 +1,129 @@
+def load_data(file_location):
+    import ast
+    #print('Begining to read file')
+    file1 = open(file_location, 'r')
+    Lines = file1.readlines()
+    file1.close() # Close here or at end of function?
+    #print('Done reading. Now to eval')
+
+    all_tasks = []
+
+    # Strips the newline character
+    for line in Lines:
+
+        s = line.strip().split()
+        #print(s)
+        try:
+            if len(s) == 1:
+                #print('la')
+                raise AttributeError
+
+            n_list = []
+            for n in s:
+                n_list.append(int(n))
+            all_tasks.append(n_list)
+        except:
+            all_tasks.append(s[0])
+
+
+    #print(all_tasks)
+
+
+    T = all_tasks.pop(0)
+
+    specials_len = len(all_tasks[0])
+    normal_len = len(all_tasks[1])
+
+    specials_len = 4 #Uncomment to override
+    normal_len = 1
+
+    current_task = []
+    output = []
+
+    if specials_len != normal_len:
+        for line in all_tasks:
+            #print(line)
+            if len(line) == specials_len:
+                #print('Specials here')
+                if len(current_task) != 0:
+                    #print('big append')
+                    output.append(current_task)
+                    current_task = []
+                current_task.append(line)
+
+            else:
+                current_task.append(line)
+            #print(current_task)
+            #print(output)
+        output.append(current_task)
+    else:
+        print('special line lengths are the same as normal line lengths. oh dear')
+
+
+    #print(output)
+    return T, output
+
+def analysis(str_lengths, M, input):
+    #print(M, input)
+
+    first_word = input[0]
+    #print(range(len(first_word), len(first_word) - M))
+
+    first_word_strings = []
+
+    for i in range(0, len(first_word) - M + 1):
+        #print(i)
+        word = input[0]
+        string = word[i:i + M]
+        #print(string)
+        first_word_strings.append(string)
+
+    #print(first_word_strings)
+
+
+    def find_V(first_word_strings,words):
+        potential_Vs = []
+
+        for potential_V in first_word_strings:
+            #print('potential_V: {}'.format(potential_V))
+            word_count = 0
+            for word in words:
+                word_count += 1
+                #print(word)
+                if potential_V in word:
+                    pass
+                else:
+                    #print('Not found')
+                    break
+                if word_count == 3:
+                    return potential_V
+            #print("")
+
+    V = find_V(first_word_strings,input[1:])
+
+    #print('V is {}'.format(V))
+
+    output_list = ""
+    for word in input:
+        #print(word)
+        output_list += str(word.find(V)) +" "
+    #print("")
+    return output_list
+
+
+T, data = load_data(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge2\Task3\input.txt")
+#print(data)
+casenum = 0
+for task in data:
+    casenum += 1
+    #print(task)
+    str_lengths = task[0]
+    M = task[1]
+    variables = task[2:]
+    scans = analysis(str_lengths, int(M), variables)
+    #scans2 = analysis(specials,variables)
+    print("Case #{}: {}".format(casenum,scans))
+    #time.sleep(1)
+
+#print(T)
+#print(data)

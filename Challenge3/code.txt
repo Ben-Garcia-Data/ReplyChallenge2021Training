@@ -1,0 +1,336 @@
+def load_data(file_location):
+    import ast
+    #print('Begining to read file')
+    file1 = open(file_location, 'r')
+    Lines = file1.readlines()
+    file1.close() # Close here or at end of function?
+    #print('Done reading. Now to eval')
+
+    all_tasks = []
+
+    # Strips the newline character
+    for line in Lines:
+
+        s = line.strip().split()
+        all_tasks.append(s)
+
+    #print(all_tasks)
+    W = int(all_tasks[0][0])
+    H = int(all_tasks[0][1])
+    office = all_tasks[1:H + 1]
+    #print(all_tasks[H + 1])
+    N_devs = int(all_tasks[H + 1][0])
+    devs = all_tasks[H + 2: H + 2 + N_devs]
+    N_PMs = int(all_tasks[H + 2 + N_devs][0])
+    PMs = all_tasks[H + 2 + N_devs + 1:]
+
+    #print(output)
+    return W, H, office, N_devs, devs, N_PMs, PMs
+
+# Aim: Assign Replyers, either Devs or PMs, to empty seats in the Reply office in most efficent way.
+# Out: Map of office with list of Devs (D) and list of PMs (M).
+
+# A dev (D) is a triplet of (Company, Bonus, Skills) aka. (C,B,S)
+# A PM is a triplet of (Company, Bonus) aka. (C,B)
+# Company = duh
+# Bonus = given for each D or PM from same Company next to them.
+#
+# When 2 D (Di + Dj) sit together in adject tiles, they have work potential WP.
+# WP == Common skills * Distinct skills
+
+# If the devs have only common skills or no common skills, they have no WP.
+
+# They also get bonus potential BP if they belong to same company.
+# BP = Bi * Bj
+
+# PM's have only BP
+
+# Total Potential, TP, from a pair of workers is addition of both works potential.
+
+# Overall score is sum of total potential of all pairs.
+
+# Employees are arranged in a grid, so each employee can have a max of 4 neighbors.
+# Each tile in the grid can be either 'M' (for PMs), '_' (for devs) or '#' (unavailable)
+
+# Input file:
+# W H => Office size
+# Office row 1
+# office row 2
+# .....
+# Office row H
+# num of devs
+# dev 1
+# dev 2 --- Each dev is composed of Company Bonus_potential num_of_skills skill1 skill2 ... skilln
+# dev N
+# num of PMs
+# PM 1
+# PM 2 -- Each dev is Company Bonus_potential
+# PM N
+
+#
+# Output format:
+# 1 line for every D + PM
+# D's first, then PMs
+# co-ords of their desk. Same order as input.
+# top left corner of map is (0,0)
+
+import pandas as pd
+import numpy as np
+from tabulate import tabulate
+import time
+
+def analysis(W, H, office, N_devs, devs, N_PMs, PMs):
+
+    #print("W = {}".format(W))
+    #print("H = {}".format(H))
+    #print("office = {}".format(office))
+    #print("N_devs = {}".format(N_devs))
+    #print(len(devs))
+    #print("devs = {}".format(devs))
+    #print("N_PMs = {}".format(N_PMs))
+    #print(len(PMs))
+    #print("PMs = {}".format(PMs))
+
+    dev_seats = 0
+    PM_seats = 0
+    #print('')
+    #print('Welcome to the office')
+    for row in office:
+        #print("       "  + row[0])
+        for seat in row[0]:
+            #print(seat)
+            if seat == '_':
+                dev_seats += 1
+            elif seat == 'M':
+                PM_seats += 1
+
+
+    valid_office_squares = dev_seats + PM_seats
+    #print("")
+    #print(valid_office_squares, dev_seats, PM_seats)
+    return dev_seats, PM_seats
+
+def make_df( N_devs, devs, N_PMs, PMs):
+
+    # Each dev is composed of Company Bonus_potential num_of_skills skill1 skill2 ... skilln
+    # Each PM is Company Bonus_potential
+    list_of_dicts = []
+    staff_id_counter = 0
+
+    # Prep data ready for Pandas
+    for staff_member in devs:
+        staff_dict = {}
+        staff_dict['Company'] = staff_member[0]
+        staff_dict['B Pot'] = int(staff_member[1])
+        staff_dict['num_skills'] = int(staff_member[2])
+        staff_dict['Skills'] = staff_member[3:]
+        staff_dict['Role'] = 'Dev'
+        staff_dict['ID'] = staff_id_counter
+        list_of_dicts.append(staff_dict)
+        staff_id_counter += 1
+    for staff_member in PMs:
+        staff_dict = {}
+        staff_dict['Company'] = staff_member[0]
+        staff_dict['B Pot'] = int(staff_member[1])
+        staff_dict['Role'] = 'PM'
+        staff_dict['ID'] = staff_id_counter
+        list_of_dicts.append(staff_dict)
+        staff_id_counter += 1
+
+    #print('Making Dataframes')
+    staff_df = pd.DataFrame(list_of_dicts)
+    #print(tabulate(staff_df.head(12),headers='keys',tablefmt='psql'))
+    # Alternative way to view is:
+    #staff_df.to_html(r'C:\Users\PC\Desktop\Code\replychallenge\Challenge3/table.html')
+
+    # Make a df for all the afiinities. Every cell has [BP,WP]
+    # This is just too large. Gotta find a better way to do this.
+    # affinity_df = pd.DataFrame(index=staff_df['ID'],columns=staff_df['ID'])
+
+    def Potential_skill_point_calculation(skills):
+        if skills > 0:
+            return (skills * 0.5) ** 2
+        else:
+            return 0
+
+    def Potential_point_calculation(skill_points,BP):
+        return skill_points + BP
+
+
+    staff_df['Skills_Potential'] = staff_df.apply(lambda  x: Potential_skill_point_calculation(x['num_skills']), axis=1)
+    staff_df['Potential'] = staff_df.apply(lambda x: Potential_point_calculation(x['B Pot'], x['Skills_Potential']), axis=1)
+
+    staff_df = staff_df.sort_values(by = ['Potential'], ascending= False) # This can be commented out later. It's not needed.
+    #print(tabulate(staff_df.head(12),headers='keys',tablefmt='psql'))
+
+    return staff_df
+
+def choose_workers(dataframe, dev_seats, PM_seats):
+    #print(tabulate(dataframe.head(12),headers='keys',tablefmt='psql'))
+
+
+    dev_df = dataframe[dataframe.Role != 'PM']
+    PM_df = dataframe[dataframe.Role != 'Dev']
+
+    #print(tabulate(PM_df.head(12),headers='keys',tablefmt='psql'))
+
+    confired_devs = dev_df.iloc[:dev_seats]
+    confired_PMs = PM_df.iloc[:PM_seats]
+    #print("+----+-----------+---------+--------------+-------------------Devs--------+--------+------+--------------------+-------------+")
+    #print(tabulate(confired_devs, headers='keys', tablefmt='psql'))
+    #print("+----+-----------+---------+--------------+----PMs---+---------------+--------------------+-------------+")
+    #print(tabulate(confired_PMs, headers='keys', tablefmt='psql'))
+
+    return confired_devs, confired_PMs
+
+def seat_workers(dev_df, PM_df, office, W, H):
+    #print('The Office:')
+    def build_office(office, W, H):
+
+        all_coords = {}
+
+        new_office = []
+
+        for row in office:
+            # print(row)
+            new_row = []
+            for seat in row[0]:
+                new_row.append(seat)
+            new_office.append(new_row)#
+
+        #print(new_office)
+
+        def neighbors(x,y, max_x, max_y):
+            #print(x,y, max_x, max_y)
+            neighbor_list = []
+            if x < max_x:
+                neighbor_list.append((x+1,y))
+            if y < max_y:
+                neighbor_list.append((x,y+1))
+            if x > 0:
+                neighbor_list.append((x-1,y))
+            if y > 0:
+                neighbor_list.append((x,y-1))
+
+            return neighbor_list
+
+        for y in range(H):
+            #print('y: ' + str(y))
+            for x in range(W):
+                #print('x : ' + str(x))
+                attributes = {}
+                attributes['Value'] = new_office[y][x]
+                attributes['Neighbors'] = neighbors(x,y,W - 1, H - 1)
+                all_coords[x,y] = attributes
+
+        #print(all_coords.keys())
+        only_valied_coords = {}
+        for coord in all_coords:
+            #print('Looking at {}'.format(coord))
+            attribs = all_coords[coord]
+            if attribs['Value'] != '#':
+                valid_neighbors = []
+                for neighbor in attribs['Neighbors']:
+                    #print('Found neighbor {}'.format(neighbor))
+                    if all_coords[neighbor]['Value'] != '#':
+                        valid_neighbors.append(neighbor)
+
+                all_coords[coord]['Valid Neighbors'] = valid_neighbors
+                only_valied_coords[coord] = all_coords[coord]
+
+                #print(coord)
+            #print(all_coords[coord])
+        #print(only_valied_coords)
+
+        return only_valied_coords, all_coords.keys()
+
+    coords, full_office = build_office(office, W, H)
+    #print(coords)
+    df1 = pd.DataFrame(coords.values())
+    df1.index = coords.keys()
+    #print(df1)
+
+    # This sorts the df with the likely high value cells first.
+    df1['Num of Neighbors'] = df1['Valid Neighbors'].str.len()
+    df1['Num of Neighbors'].astype(int)
+    df1 = df1.sort_values(by='Num of Neighbors', ascending=False)
+    #print(df1)
+    #print("-----------------")
+    #best_coords = list(df1.index) #Coords list ordered with the 'best' coords highest.
+
+
+    out_dict = {}
+    # Makes a list of dicts. Each dict is a coord with an ID.
+
+
+    # This is bad and will be slow
+    for index, row in df1.iterrows():
+        #print(index)
+        #print(row)
+
+        if row['Value'] == 'M':
+
+            #print('M')
+            out_dict[PM_df['ID'].iloc[0]] = index
+            PM_df = PM_df.iloc[1:]
+            #print(PM_df)
+
+        elif row['Value'] == '_':
+
+            #print('_')
+            out_dict[dev_df['ID'].iloc[0]] = index
+            dev_df = dev_df.iloc[1:]
+            #print(dev_df)
+
+        else:
+            print('Bug')
+
+
+        #print("")
+
+    #print('-------------------DONE')
+    #print(len(out_dict))
+    #print(type(out_dict))
+    #print(out_dict)
+    return out_dict, full_office
+
+def prepare_output(seated_workers, all_workers):
+    #print('la')
+    #print(all_workers['ID'])
+    #print(seated_workers)
+    output_list = []
+    all_workers = all_workers.sort_index()
+    seated = seated_workers.keys()
+    for worker in all_workers['ID']:
+        #print(worker)
+        #print(len(worker))
+        #time.sleep(2)
+        if worker in seated:
+            #print('lala')
+            output_list.append(str(seated_workers[worker][0]) + " " + str(seated_workers[worker][1]))
+        else:
+            #print('nah')
+            output_list.append('X')
+
+    #print("--------------------------------")
+    return  output_list
+
+
+
+
+
+W, H, office, N_devs, devs, N_PMs, PMs = load_data(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge3\a_solar.txt")
+#print(data)
+dev_seats, PM_seats = analysis(W, H, office, N_devs, devs, N_PMs, PMs)
+df = make_df(N_devs, devs, N_PMs, PMs)
+#print("-------------------------------")
+#print(df)
+dev_df, PM_df = choose_workers(df, dev_seats, PM_seats)
+seated_workers, office2 = seat_workers(dev_df, PM_df, office, W, H)
+output = prepare_output(seated_workers,df)
+
+for x in output:
+    print(x)
+
+#print(T)
+#print(data)

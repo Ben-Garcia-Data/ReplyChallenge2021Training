@@ -1,0 +1,135 @@
+def file_reader(file_location):
+    import ast
+    print('Begining to read file')
+    file1 = open(file_location, 'r')
+    Lines = file1.readlines()
+    file1.close() # Close here or at end of function?
+    #print('Done reading. Now to eval')
+
+    output = []
+
+    count = 0
+
+    # Strips the newline character
+    for line in Lines:
+        s = line.strip().split()
+        s = s[0]
+        try:
+            s = int(s)
+        except:
+            pass
+        output.append(s)
+
+
+    #print('Done evaling file')
+    #print(output)
+    T = output.pop(0)
+    T = T
+    #print(output)
+    output_list = []
+    this_case = []
+
+    for entry in output:
+        #print(entry)
+        if type(entry) == int and len(this_case) != 0:
+            #print('This entry is a new case')
+            output_list.append(this_case)
+            this_case = []
+            this_case.append(entry)
+        else:
+            this_case.append(entry)
+
+    output_list.append(this_case)
+
+    #print(output_list)
+    #print("T = {}".format(T))
+    #print("")
+
+    return T, output_list
+
+
+
+def analyser(N, S, CP):
+    #print("Target word is: {}".format(S))
+    #print("Words to use are: {}".format(CP))
+    #print(CP)
+
+    gadgets = []
+
+    def makegadgets(word, gadgets):
+        for x in range(len(word)):
+            gadgets.append(word[x:len(word)])
+
+        return gadgets
+
+    for word in CP:
+        makegadgets(word, gadgets)
+
+    gadgets = list(dict.fromkeys(gadgets))
+    gadgets.sort(key=len, reverse= True)
+    #print("Gadgets are: {}".format(gadgets))
+    gadgets_used = 0
+
+
+    #print(indices)
+
+    first_one_letters = [word[0] for word in gadgets]
+    #print("First Letters are: {}".format(first_one_letters))
+
+    def huntgadgets(gadgets,S,gadgets_used):
+        #print('Looking for ' + str(S))
+        if S in gadgets:
+            #print('Perfect match')
+            gadgets_used += 1
+            return True, True, gadgets_used, ""
+
+        indices = [i for i, x in enumerate(first_one_letters) if x == S[0]]
+        #print('Indicies: {}'.format(indices))
+
+        for index in indices:
+
+            gadget = gadgets[index]
+            #print(gadget)
+            target = S[0:len(gadget)]
+            #print(target)
+            if gadget == target:
+                gadgets_used += 1
+                #print(gadget)
+                #print("This will start us off. Gadgets used: {}".format(gadgets_used))
+                new_target = S[len(gadget):]
+                if len(new_target) == 0:
+                    #print('This should exit now')
+                    return True, True, gadgets_used, ""
+                #print('New target: {}'.format(new_target))
+                return False, True, gadgets_used, new_target
+        return False, False, "", ""
+
+    solved = False
+    can_iterate_again = True
+
+    for loop in range(500):
+
+        if solved == True:
+            return gadgets_used
+        elif can_iterate_again == False:
+            return -1
+        else:
+            solved, can_iterate_again, gadgets_used, S = huntgadgets(gadgets, S, gadgets_used)
+
+
+
+
+
+
+
+T, data = file_reader(r"C:\Users\PC\Desktop\Code\replychallenge\Task4\realinput.txt")
+casenum = 0
+for case in data:
+    casenum += 1
+    #print("")
+    #print("Starting case {}".format(casenum))
+    N = case[0]
+    S = case[1]
+    CP = case[2:]
+    gadgets_needed = analyser(N, S, CP)
+    print("Case #{}: {}".format(casenum,gadgets_needed))

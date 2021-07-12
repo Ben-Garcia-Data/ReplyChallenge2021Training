@@ -1,0 +1,104 @@
+def load_data(file_location):
+    import ast
+    #print('Begining to read file')
+    file1 = open(file_location, 'r')
+    Lines = file1.readlines()
+    file1.close() # Close here or at end of function?
+    print('Done reading. Now to reformat')
+
+    all_tasks = []
+
+    # Strips the newline character
+    for line in Lines:
+
+        s = line.strip().split()
+        try:
+            s = int(s)#
+            all_tasks.append(s)
+        except:
+            n_list = []
+            for n in s:
+                n_list.append(int(n))
+            all_tasks.append(n_list)
+
+    #print(all_tasks)
+
+    T = all_tasks.pop(0)[0]
+
+    #print(T)
+
+
+    output = all_tasks
+
+    #print(all_tasks)
+
+
+    #print("")
+
+
+    print("Done reformatting")
+    #output = output[1:]
+    #print(output)
+    return T, output
+
+def analysis(input):
+    print(input)
+    R = input[0]
+    N = input[1]
+    M = input[2]
+
+    #total_grains = 0
+    grain_list = []
+
+    for cell in range(N * N):
+        #print('Cell #{}'.format(cell))
+        grains = (R ** cell) % M
+        #print(grains)
+        if grains in grain_list:
+            print('break')
+            break
+        grain_list.append(grains)
+        #total_grains += grains
+
+
+    print(cell)
+    print(grain_list)
+    loop_grains = sum(grain_list)
+    end_loop = len(grain_list)
+    print(loop_grains)
+    #print(total_grains)
+    #print('----')
+    print(end_loop)
+    repeats = (N*N) / end_loop
+    print(repeats)
+    import math
+    s = (repeats % 1) * end_loop
+    print(s)
+    bonus = sum(grain_list[round(s):])
+    print(bonus)
+
+
+    all_grains = bonus + (math.floor(repeats) * loop_grains)
+
+    return all_grains
+
+
+task_number = 2
+
+T, data = load_data(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge4\Task" +str(task_number) + "\input.txt")
+
+casenum = 0
+
+output = []
+#print(data)
+for task in data:
+    casenum += 1
+    #print(task)
+    scans = analysis(task)
+    print("Case #{}: {}".format(casenum,scans))
+    output.append("Case #{}: {}{}".format(casenum,scans,"\n"))
+    #time.sleep(1)
+
+f = open(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge4\Task" +str(task_number) + "\output.txt", "w")
+f.writelines(output)
+f.close()

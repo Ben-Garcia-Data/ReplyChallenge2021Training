@@ -1,0 +1,195 @@
+def load_data(file_location):
+    import ast
+    # print('Begining to read file')
+    file1 = open(file_location, 'r')
+    Lines = file1.readlines()
+    file1.close()  # Close here or at end of function?
+    print('Done reading. Now to reformat')
+
+    all_tasks = []
+
+    # Strips the newline character
+    for line in Lines:
+
+        s = line.strip().split()
+        try:
+            s = int(s)  #
+            all_tasks.append(s)
+        except:
+            n_list = []
+            for n in s:
+                n_list.append(int(n))
+            all_tasks.append(n_list)
+
+    # print(all_tasks)
+
+    T = all_tasks.pop(0)[0]
+
+    # print(T)
+
+    output = []
+    num_of_specials = 1  # CHANGE MEEEEE
+
+    for task in range(T):
+        for special in range(num_of_specials):
+            current_specials = (all_tasks.pop(0))
+        normals = []
+        for normal in range(26):
+            normals.append(all_tasks.pop(0))
+        for bonus in range(1):
+            bonuss = (all_tasks.pop(0))
+
+        output.append([current_specials, bonuss, normals])
+
+    # print("")
+
+    print("Done reformatting")
+    # output = output[1:]
+    # print(output)
+    return T, output
+
+
+def analysis(input):
+    # print(input)
+    # print(input[0][0])
+    # print(input[1])
+    # for i in input[1]:
+    # print(i)
+
+    # Length of password = L
+    # Character Pair table = P
+    # target password = K (The Kth best password)
+
+    # Pasword Score = sum of pairs of adjacent characters.
+    # If draw on score, lexicographically lowest first.
+
+    # Input:
+    # L = Number of buttons_dict pushed
+    # K = Which password interested in.
+    L, K = input[0]
+    buttons_pressed = str(input[1][0])
+
+    # Next 26 lines contain table P.
+    P = input[2]
+
+    # For each row in the table, the row correlates to the number: '0 = A, 1 = B... 25 = Z'
+    # For each column in the row, the column correlates to the number: '0 = A, 1 = B... 25 = Z'
+    # So to find the score for a & z (in that order) you'd look for P[row = 'a'][column = 'z'].
+
+    buttons_dict = {}
+    buttons_dict[2] = ['A', 'B', 'C']
+    buttons_dict[3] = ['D', 'E', 'F']
+    buttons_dict[4] = ['G', 'H', 'I']
+    buttons_dict[5] = ['J', 'K', 'L']
+    buttons_dict[6] = ['M', 'N', 'O']
+    buttons_dict[7] = ['P', 'Q', 'R', 'S']
+    buttons_dict[8] = ['T', 'U', 'V']
+    buttons_dict[9] = ['W', 'X', 'Y', 'Z']
+    #print(buttons_dict)
+
+    numbers_dict = {}
+    numbers_dict['A'] = 0
+    numbers_dict['B'] = 1
+    numbers_dict['C'] = 2
+    numbers_dict['D'] = 3
+    numbers_dict['E'] = 4
+    numbers_dict['F'] = 5
+    numbers_dict['G'] = 6
+    numbers_dict['H'] = 7
+    numbers_dict['I'] = 8
+    numbers_dict['J'] = 9
+    numbers_dict['K'] = 10
+    numbers_dict['L'] = 11
+    numbers_dict['M'] = 12
+    numbers_dict['N'] = 13
+    numbers_dict['O'] = 14
+    numbers_dict['P'] = 15
+    numbers_dict['Q'] = 16
+    numbers_dict['R'] = 17
+    numbers_dict['S'] = 18
+    numbers_dict['T'] = 19
+    numbers_dict['U'] = 20
+    numbers_dict['V'] = 21
+    numbers_dict['W'] = 22
+    numbers_dict['X'] = 23
+    numbers_dict['Y'] = 24
+    numbers_dict['Z'] = 25
+
+    #print(L)
+    #print(K)
+    #print(buttons_pressed)
+    # for i in P:
+    # print(i)
+
+    numbers = []
+    for i in buttons_pressed:
+        # print(i)
+        numbers.append(int(i))
+
+    # Make all possible number inputs
+
+    def add_letters(button, arr):
+        letters_to_add = buttons_dict[button]
+        #print('Start with {}'.format(arr))
+        #print('Adding {}'.format(letters_to_add))
+        longer_arr = []
+        for possible_string in arr:
+            new_possible_strings = []
+            for letter in letters_to_add:
+                new_possible_strings.append(possible_string + letter)
+            #print(new_possible_strings)
+            #print(longer_arr)
+            longer_arr.extend(new_possible_strings)
+            #print(longer_arr)
+            #print('----')
+
+        #print('Returning {}'.format(longer_arr))
+        return longer_arr
+
+    letters = ['']
+    for i in numbers:
+        #print(i)
+        #print(letters)
+        letters = add_letters(i, letters)
+
+    #print(letters)
+
+    # Now that we have a list of every single possible string input, let's work out their scores.
+    scores = []
+
+
+    for string in letters:
+        score = 0
+        for letter_index in range(len(string) - 1):
+            letter_1 = string[letter_index]
+            letter_2 = string[letter_index + 1]
+            #print('Letter combo: ({}, {})'.format(letter_1,letter_2))
+            score += P[numbers_dict[letter_1]][numbers_dict[letter_2]]
+        scores.append(score)
+
+    best_score_index = scores.index(max(scores))
+    output = letters[best_score_index]
+
+
+    return output
+
+
+task_number = 3
+
+T, data = load_data(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge4\Task" + str(task_number) + "\input.txt")
+
+casenum = 0
+
+output = []
+# print(data)
+for task in data:
+    casenum += 1
+    # print(task)
+    scans = analysis(task)
+    print("Case #{}: {}".format(casenum, scans))
+    output.append("Case #{}: {}{}".format(casenum, scans, "\n"))
+    # time.sleep(1)
+
+f = open(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge4\Task" + str(task_number) + "\output.txt", "w")
+f.writelines(output)
+f.close()

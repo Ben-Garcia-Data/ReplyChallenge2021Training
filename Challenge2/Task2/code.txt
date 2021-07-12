@@ -1,0 +1,542 @@
+def load_data(file_location):
+    import ast
+    #print('Begining to read file')
+    file1 = open(file_location, 'r')
+    Lines = file1.readlines()
+    file1.close() # Close here or at end of function?
+    #print('Done reading. Now to eval')
+
+    all_tasks = []
+
+    # Strips the newline character
+    for line in Lines:
+
+        s = line.strip().split()
+        try:
+            s = int(s)#
+            all_tasks.append(s)
+        except:
+            n_list = []
+            for n in s:
+                n_list.append(int(n))
+            all_tasks.append(n_list)
+
+
+
+    T = all_tasks.pop(0)
+
+    specials_len = len(all_tasks[0])
+    normal_len = len(all_tasks[1])
+
+    # specials_len = #Uncomment to override
+    # normal_len =
+
+    current_task = []
+    output = []
+
+    if specials_len != normal_len:
+        for line in all_tasks:
+            #print(line)
+            if len(line) == specials_len:
+                #print('Specials here')
+                if len(current_task) != 0:
+                    #print('big append')
+                    output.append(current_task)
+                    current_task = []
+                current_task.append(line)
+
+            else:
+                current_task.append(line)
+            #print(current_task)
+            #print(output)
+        output.append(current_task)
+    else:
+        print('special line lengths are the same as normal line lengths. oh dear')
+
+
+    #print(output)
+    return T, output
+
+def analysis(specials,variables):
+    time1 = time.time()
+
+    #print(specials, variables)
+
+    # Reformat bone into sections
+    def reformat(variables):
+        print('Var:              {}'.format(variables))
+        reformatted = []
+        count = 0
+
+        for segment in variables:
+            #print(segment)
+            this_segment = []
+            for N in segment:
+                #print(N)
+                target_rads = N
+                if target_rads == 0 and count == 0:
+                    #print("a")
+                    continue
+                elif target_rads != 0:
+                    #print("b")
+                    this_segment.append(N)
+                elif target_rads == 0:
+                    #print("c")
+                    reformatted.append(this_segment)
+                    this_segment = []
+                count += 1
+            if sum(this_segment) != 0:
+                reformatted.append(this_segment)
+
+        print('Reformatted data: {}'.format(reformatted))
+
+        return reformatted
+
+    def operate(segmented_data, operations):
+
+        #print('Operating data: {}'.format(segmented_data))
+
+
+
+        new_segmented = []
+        #print(segmented_data)
+        for segment in segmented_data:
+            operations += 1
+            #print('Segment: {}'.format(segment))
+            new_segment = []
+            for i in segment:
+                i += -1
+                new_segment.append(i)
+
+            if sum(new_segment) != 0:
+                #print('New Segment: {}'.format(new_segment))
+                new_segmented.append(new_segment)
+
+        # print(segmented_data)
+        # print(new_segmented)
+
+
+        return new_segmented, operations
+
+    def method_two(operations, data):
+        #print(data)
+
+        def operate_once(data):
+
+            #time1 = time.time()
+            index_max = max(range(len(data)), key=data.__getitem__)
+            max_value = data[index_max]
+            start_list = data[:index_max]
+            start_list.reverse()
+            end_list = data[index_max + 1:]
+
+            previous_to_operate_on = 0
+            subsequent_to_operate_on = 0
+
+            #time2 = time.time()
+
+            for value in start_list:
+                if value == max_value:
+                    previous_to_operate_on += 1
+                else:
+                    break
+
+
+            for value in end_list:
+                if value == max_value:
+                    subsequent_to_operate_on += 1
+                else:
+                    break
+
+            #time3 = time.time()
+
+            #print(index_max,previous_to_operate_on,subsequent_to_operate_on)
+
+            #print((index_max + subsequent_to_operate_on), (index_max - previous_to_operate_on))
+
+            for index in range(index_max - previous_to_operate_on, index_max + subsequent_to_operate_on + 1):
+                #print('Index: {}'.format(index))
+                data[index] = max_value - 1
+
+            #print('New values: {}'.format(data))
+
+            time4 = time.time()
+
+            #print('Times: {} : {} : {}'.format(time2 - time1, time3 - time2, time4 - time3))
+
+            #print(start_list)
+            #print(end_list)
+            #print("")
+
+            return data
+
+        for segment in range(len(data)):
+            print('Segment: {}'.format(data[segment]))
+            time10 = time.time()
+
+            operation_list = data[segment]
+
+            for loop in range(100000000):
+
+                if sum(operation_list) == 0:
+                    print('sum0')
+                    break
+                elif max(operation_list) == min(operation_list):
+                    print('leveled out')
+                    break
+                else:
+
+                    #print(operations)
+                    #print(data)
+
+                    operation_list = operate_once(operation_list)
+
+                    operations += 1
+                    continue
+
+                print('ERROR. TOO MANY OPERATIONS.')
+
+
+            time11 = time.time()
+            print('{} secs'.format(time11 - time10))
+
+
+        return operations
+
+    #ops = method_two(variables)
+
+    if max(variables) == min(variables):
+        #print('Easy match')
+        return variables[0]
+
+
+    def method_three(operations, data):
+
+        def splitter(input):
+            #print(input)
+            def split_me(a):
+                #print(a)
+                output = []
+
+
+                for segment in a:
+                    this_segment = []
+                    for word in segment:
+                        if word != 0:
+                            this_segment.append(word)
+                        else:
+                            output.append(this_segment)
+                            this_segment = []
+                    output.append(this_segment)
+                #print(output)
+                return output
+
+
+            if len(input) == 1:
+                #print('len1')
+                return split_me(input)
+
+            else:
+                #print('else')
+                a_list = []
+
+                for i in input:
+                    if sum(i) != 0:
+                        a_list.append(split_me(i))
+
+                return a_list
+
+        def minops(input):
+            output = []
+            ops = 0
+            for segment in input:
+                sub_output = []
+                min_value = min(segment)
+                #print('Segment:      {}'.format(segment))
+                for x in segment:
+                    #print(segment)
+
+                    sub_output.append(x - min_value)
+                output.append(sub_output)
+                #print('output:       {}'.format(output))
+                ops += min_value
+            return ops, output
+
+        data = splitter(data)
+        ops, data = minops(data)
+
+        return ops, data
+
+    def method_five(operations, data):
+        #print(operations)
+
+        index_max = max(range(len(data)), key=data.__getitem__)
+        max_value  = data[index_max]
+        prev_value = data[index_max - 1]
+        next_value = data[index_max + 1]
+
+        prev_diff = max_value - prev_value
+        next_diff = max_value - next_value
+
+        if prev_diff >= next_value:
+            data[index_max] = prev_value
+            operations += prev_diff
+        else:
+            data[index_max] = next_value
+            operations += next_diff
+
+        return operations, data
+
+
+        #print(reformatted)
+
+    def method_four(input):
+        #print(max(input))
+        #input.sort()
+        #print(input)
+        counter = 0
+
+        for index in range(len(input) - 1):
+
+            diff = input[index + 1] - input[index]
+
+            if diff > 0:
+                counter += diff
+
+
+        #print(counter + input[0], input[0],input[1],input[-1])
+        return counter + input[0]
+
+    def method_six(operations, input):
+
+        def find(lst, a):
+            result = []
+            for i, x in enumerate(lst):
+                if x == a:
+                    result.append(i)
+            return result
+
+        max_value = max(input)
+
+        indicies = find(input,max_value)
+
+        print(indicies)
+
+        for index in indicies:
+            max_value = data[index]
+            if index > 0:
+                prev_value = data[index - 1]
+            else:
+                prev_value = 0
+            try:
+                index < len(input)
+                next_value = data[index + 1]
+            except:
+                next_value = 0
+
+            prev_diff = max_value - prev_value
+            next_diff = max_value - next_value
+
+            if prev_diff >= next_value:
+                data[index] = prev_value
+                operations += prev_diff
+            else:
+                data[index] = next_value
+                operations += next_diff
+
+            return operations, data
+
+    def method_seven(input):
+        time1 = time.time()
+        operations = 0
+        #print('Input:      {}'.format(input))
+
+        operations, input = method_three(operations, [input])
+        #print('split data: {}'.format(input))
+        #print("pre-loop ops: {}".format(operations))
+
+        def resplitter(data):
+            resplit_data = []
+            for segment in data:
+                #print('Segment:    {}'.format(segment))
+                counter = 0
+
+                this_segment = []
+                for value in segment:
+                    #print('value: {}'.format(value))
+                    if value == 0:
+                        if counter == 0:
+                            #print('cont')
+                            continue
+                        elif len(this_segment) > 0:
+                            resplit_data.append(this_segment)
+                            this_segment = []
+                            counter += 1
+                            #print('Appended to main resplit_data')
+                            #print('resplit_data: {}'.format(resplit_data))
+                            continue
+                        else:
+                            continue
+                    else:
+                        this_segment.append(value)
+                        counter += 1
+                        #print('else')
+
+                    #print('this segment: {}'.format(this_segment))
+                    #print("")
+
+                if len(this_segment) > 0:
+                    resplit_data.append(this_segment)
+
+
+                #print('resplit_data: {}'.format(resplit_data))
+
+            return resplit_data
+
+        def loop_me(operations, input):
+
+            latest_segments_to_do = []
+            for segment in input:
+                if len(segment) == 1:
+                    operations += segment[0]
+
+                    #print('Easy add of ops')
+                    #print('ops: {}'.format(operations))
+                else:
+
+                    def operate_once(data):
+
+                        # time1 = time.time()
+                        index_max = max(range(len(data)), key=data.__getitem__)
+                        max_value = data[index_max]
+                        start_list = data[:index_max]
+                        start_list.reverse()
+                        end_list = data[index_max + 1:]
+
+                        previous_to_operate_on = 0
+                        subsequent_to_operate_on = 0
+
+                        # time2 = time.time()
+
+                        for value in start_list:
+                            if value == max_value:
+                                previous_to_operate_on += 1
+                            else:
+                                break
+
+                        for value in end_list:
+                            if value == max_value:
+                                subsequent_to_operate_on += 1
+                            else:
+                                break
+
+                        # time3 = time.time()
+
+                        # print(index_max,previous_to_operate_on,subsequent_to_operate_on)
+
+                        # print((index_max + subsequent_to_operate_on), (index_max - previous_to_operate_on))
+
+                        for index in range(index_max - previous_to_operate_on,
+                                           index_max + subsequent_to_operate_on + 1):
+                            # print('Index: {}'.format(index))
+                            data[index] = max_value - 1
+
+                        # print('New values: {}'.format(data))
+
+                        time4 = time.time()
+
+                        # print('Times: {} : {} : {}'.format(time2 - time1, time3 - time2, time4 - time3))
+
+                        # print(start_list)
+                        # print(end_list)
+                        # print("")
+
+                        return data
+                    #print('else')
+                    #print(segment)
+                    segment = operate_once(segment)
+                    latest_segments_to_do.append(segment)
+                    operations += 1
+
+            #print('latest_segs: {}'.format(latest_segments_to_do))
+            return operations, latest_segments_to_do
+
+        resplit = input
+
+        for loop in range(1000000):
+
+            resplit = resplitter(resplit)
+            #print('resplit data: {}'.format(resplit))
+            operations, resplit = loop_me(operations, resplit)
+            if len(resplit) == 0:
+                break
+            #time.sleep(0.1)
+
+        time2 = time.time()
+        #print("Time: {}".format(time2 - time1))
+
+        return operations # THIS WORKS PERFECTLY
+
+
+
+
+    #return method_seven(variables)
+
+
+    return method_four(variables)
+
+    operations = 0
+    #print('Pre-analysis  {}'.format(variables))
+
+    ops, data = method_three(operations, [variables])
+    #time2 = time.time()
+    #print('Mins removed: {}'.format(data))
+    #print('This took {} ops. Has {} segments.'.format(ops,len(data)))
+
+    operations = method_two(ops, data)
+
+    #time3 = time.time()
+    #processing_time = time2 - time1
+    #processing_time2 = time3 - time2
+
+    #print('Took {} secs.'.format(processing_time2))
+
+    return operations
+
+def test(input):
+    #print(input)
+    input.reverse()
+    counter = 0
+    for index in range(len(input) - 1):
+        diff = input[index] - input[index + 1]
+        #print(diff)
+
+        if diff > 0:
+            #print('la')
+            counter += diff
+    print(counter)
+
+    return counter
+
+
+import time
+
+
+
+
+
+T, data = load_data(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge2\Task2\input.txt")
+#print(data)
+casenum = 0
+for task in data:
+    casenum += 1
+    #print(task)
+    specials = task[0]
+    variables = task[1]
+    scans = analysis(specials, variables)
+    #scans2 = analysis(specials,variables)
+    print("Case #{}: {}".format(casenum,scans))
+    #time.sleep(1)
+
+#print(T)
+#print(data)

@@ -1,0 +1,172 @@
+def load_data(file_location):
+    import ast
+    #print('Begining to read file')
+    file1 = open(file_location, 'r')
+    Lines = file1.readlines()
+    file1.close() # Close here or at end of function?
+    print('Done reading. Now to reformat')
+
+    all_tasks = []
+
+    # Strips the newline character
+    for line in Lines:
+
+        s = line.strip().split()
+        try:
+            s = int(s)#
+            all_tasks.append(s)
+        except:
+            n_list = []
+            for n in s:
+                n_list.append(int(n))
+            all_tasks.append(n_list)
+
+    #print(all_tasks)
+
+    T = all_tasks.pop(0)[0]
+
+    #print(T)
+
+
+    output = []
+    num_of_specials = 3 # CHANGE MEEEEE
+
+    for task in range(T):
+        current_specials = []
+        for special in range(num_of_specials):
+         current_specials.append(all_tasks.pop(0))
+
+        #print(current_specials)
+        num_of_normal = current_specials[2][0] # Change to give N in specials
+        #print(num_of_normal)
+        current_task = []
+        for normal in range(num_of_normal):
+            current_task.append(all_tasks.pop(0))
+        output.append([current_specials,current_task])
+
+
+
+
+    #print("")
+
+
+    print("Done reformatting")
+    #output = output[1:]
+    #print(output)
+    return T, output
+
+def analysis(variables, teleporters):
+    #print(variables)
+    #print(input)
+
+    X, Y = variables[0]
+    Xzero, Yzero = variables[1]
+    start_position = (Xzero, Yzero)
+    N = variables[2][0]
+
+    neat_teleporters = []
+    for teleporter in teleporters:
+        neat_teleporters.append([(teleporter[0],teleporter[1]),(teleporter[2],teleporter[3])])
+
+    #print(neat_teleporters)
+    #neat_teleporters.sort(key=lambda x: x[0][1], reverse=True)
+    #neat_teleporters.sort(key=lambda x: x[0][0], reverse=True)
+    print(neat_teleporters)
+
+    current_position = start_position
+    movements = 0
+    def go_to_teleporter(cur_pos,teleporters,movements):
+        gaps = []
+        x_gaps = []
+        y_gaps = []
+        # Find the gaps distance
+
+        def find_closest(cur_pos,teleporters):
+            for teleporter in range(len(teleporters)):
+                # print(neat_teleporters[teleporter][0])
+                x_gap_to_teleporter = teleporters[teleporter][0][0] - cur_pos[0]
+                y_gap_to_teleporter = teleporters[teleporter][0][1] - cur_pos[1]
+                if x_gap_to_teleporter < 0:
+                    x_gap_to_teleporter = x_gap_to_teleporter * -1
+                if y_gap_to_teleporter < 0:
+                    y_gap_to_teleporter = y_gap_to_teleporter * -1
+
+                total_gaps_to_teleporter = x_gap_to_teleporter + y_gap_to_teleporter
+
+                gaps.append(total_gaps_to_teleporter)
+                x_gaps.append(x_gap_to_teleporter)
+                y_gaps.append(y_gap_to_teleporter)
+
+            def find(a, lst):
+                result = []
+                for i, x in enumerate(lst):
+                    if x == a :
+                        result.append(i)
+                return result
+
+            min_value = min(gaps)
+            if gaps.count(min_value) > 1:
+                indicies = find(min_value,gaps)
+                small_gaps = []
+                for index in indicies:
+                    small_gaps.append(x_gaps[index])
+            else:
+                index = gaps.index(min_value)
+                return teleporters[index], gaps[index]
+
+            min_value2 = min(small_gaps)
+
+            if small_gaps.count(min_value2) > 1:
+                indicies2 = find(min_value2,small_gaps)
+                small_gaps2 = []
+                for index in indicies2:
+                    small_gaps2.append(y_gaps[index])
+            else:
+                index = small_gaps.index(min_value2)
+                return  teleporters[index], gaps[index]
+
+            min_value3 = min(small_gaps2)
+            index = small_gaps2.index(min_value3)
+            return teleporters[index], gaps[index]
+
+        target_teleporter, gap = find_closest(cur_pos,teleporters)
+        #print(target_teleporter, gap)
+
+        new_position = target_teleporter[1]
+        movements += gap
+        teleporters.remove(target_teleporter)
+        return new_position, teleporters, movements
+
+    for loop in range(len(neat_teleporters)):
+        current_position, neat_teleporters, movements = go_to_teleporter(current_position, neat_teleporters, movements)
+
+    print(movements)
+
+    R = 100003
+
+    output = movements % R
+
+    return output
+
+
+task_number = 1
+
+T, data = load_data(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge4\Task" +str(task_number) + "\input.txt")
+
+casenum = 0
+
+output = []
+for task in data:
+    casenum += 1
+    #print(task)
+    specials = task[0]
+    input = task[1]
+    scans = analysis(specials, input)
+    #scans2 = analysis(specials,variables)
+    print("Case #{}: {}".format(casenum,scans))
+    output.append("Case #{}: {}{}".format(casenum,scans,"\n"))
+    #time.sleep(1)
+
+f = open(r"C:\Users\PC\Desktop\Code\replychallenge\Challenge4\Task" +str(task_number) + "\output.txt", "w")
+f.writelines(output)
+f.close()
